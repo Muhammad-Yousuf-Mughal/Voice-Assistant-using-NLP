@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Voice Agent | FastAPI | Groq Cloud</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -37,35 +37,25 @@
     </style>
 </head>
 <body>
-
     <div class="container">
-        <div class="top-notice">
-            <span>📌</span> Speak naturally after pressing <strong>Start Call</strong>.
-        </div>
-
+        <div class="top-notice"><span>📌</span> Speak naturally after pressing <strong>Start Call</strong>.</div>
         <div class="avatar-area">
             <div id="avatar" class="avatar-badge">🤖</div>
             <div id="status" class="status-text">Ready</div>
         </div>
-
         <div id="chatBox" class="chat-box"></div>
-
         <div class="controls-panel">
             <div class="button-group">
                 <button id="startBtn" class="btn btn-start">📞 Start Call</button>
                 <button id="endBtn" class="btn btn-end" disabled>🚫 End Call</button>
                 <button id="resetBtn" class="btn btn-reset">🔄 New Conversation</button>
             </div>
-
             <div class="call-info">
                 <span>Call Duration</span>
                 <span id="timer" class="timer">00:00:00</span>
             </div>
         </div>
-
-        <div class="footer-tag">
-            AI Voice Agent | FastAPI | Groq Cloud
-        </div>
+        <div class="footer-tag">AI Voice Agent | FastAPI | Groq Cloud</div>
     </div>
 
     <script>
@@ -82,15 +72,14 @@
         let timerInterval = null;
         let secondsElapsed = 0;
         let recognition = null;
-        let synth = window.speechSynthesis;
+        const synth = window.speechSynthesis;
 
-        // Silence Timer Variables
+        // Fast Response Configuration
         let silenceTimer = null;
         let currentTranscript = "";
-        const SILENCE_TIMEOUT_MS = 1000; // Adjust response speed here (1000ms = 1 second of silence)
+        const SILENCE_TIMEOUT_MS = 600; // Trigger response 0.6 seconds after silence
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
             recognition.continuous = true;
@@ -108,10 +97,8 @@
                 if (transcript.trim().length > 0) {
                     currentTranscript = transcript.trim();
 
-                    // Reset silence timer every time speech is detected
+                    // Reset silence countdown whenever sound/speech is detected
                     clearTimeout(silenceTimer);
-
-                    // Set timeout: triggers response as soon as silence is maintained for SILENCE_TIMEOUT_MS
                     silenceTimer = setTimeout(() => {
                         processSpeech();
                     }, SILENCE_TIMEOUT_MS);
@@ -123,32 +110,27 @@
             };
 
             recognition.onend = () => {
-                // Restart listening automatically if call is still active and not processing
                 if (isCallActive && !synth.speaking && statusText.innerText === 'Listening...') {
                     try { recognition.start(); } catch (e) {}
                 }
             };
         } else {
-            alert("Your browser does not support Speech Recognition. Please use Google Chrome.");
+            alert('Your browser does not support Speech Recognition. Please use Google Chrome.');
         }
 
         async function processSpeech() {
             if (!currentTranscript || !isCallActive) return;
 
-            const userText = currentTranscript;
-            currentTranscript = ""; // Clear buffer
+            const userSpeech = currentTranscript;
+            currentTranscript = "";
             clearTimeout(silenceTimer);
 
-            // Stop recognition while waiting and generating speech
             try { recognition.stop(); } catch (e) {}
 
-            // Render User Message
-            renderMessage('You:', userText, 'user-card');
-            conversationHistory.push({ role: 'user', content: userText });
-
+            renderMessage('You:', userSpeech, 'user-card');
+            conversationHistory.push({ role: 'user', content: userSpeech });
             setStatus('Thinking...', '');
 
-            // Fetch Groq response
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
@@ -158,12 +140,9 @@
 
                 const data = await response.json();
                 const aiReply = data.response;
-
                 renderMessage('AI:', aiReply, 'ai-card');
                 conversationHistory.push({ role: 'assistant', content: aiReply });
-
                 speakResponse(aiReply);
-
             } catch (err) {
                 console.error('API Error:', err);
                 setStatus('Error connecting to AI backend', '');
@@ -197,25 +176,16 @@
             synth.cancel();
             currentTranscript = "";
             setStatus('Listening...', 'listening');
-            try {
-                recognition.start();
-            } catch (e) {}
+            try { recognition.start(); } catch (e) {}
         }
 
         function speakResponse(text) {
             if (!isCallActive) return;
-
             setStatus('speaking...', 'speaking');
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = 1.0;
             utterance.pitch = 1.0;
-
-            utterance.onend = () => {
-                if (isCallActive) {
-                    startListening();
-                }
-            };
-
+            utterance.onend = () => { if (isCallActive) startListening(); };
             synth.speak(utterance);
         }
 
@@ -226,9 +196,7 @@
             clearTimeout(silenceTimer);
             stopTimer();
             synth.cancel();
-            if (recognition) {
-                try { recognition.stop(); } catch (e) {}
-            }
+            if (recognition) { try { recognition.stop(); } catch(e){} }
             avatar.className = 'avatar-badge';
         }
 
