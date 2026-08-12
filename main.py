@@ -1,24 +1,16 @@
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from groq import Groq
 from pydantic import BaseModel
 
 load_dotenv()
 
 app = FastAPI(title="AI Voice Agent")
-
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
-
-# Mount static files if directory exists
-if STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 api_key = os.getenv("GROQ_API_KEY")
 groq_client = Groq(api_key=api_key) if api_key else None
@@ -40,13 +32,32 @@ SYSTEM_PROMPT = (
 )
 
 
+def find_index_html() -> Optional[str]:
+    """Search for index.html in static folder or root directory."""
+    base_dir = Path(__file__).resolve().parent
+    cwd = Path(os.getcwd())
+
+    candidate_paths = [
+        base_dir / "static" / "index.html",
+        base_dir / "index.html",
+        cwd / "static" / "index.html",
+        cwd / "index.html",
+    ]
+
+    for path in candidate_paths:
+        if path.exists():
+            return path.read_text(encoding="utf-8")
+    return None
+
+
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
-    index_path = STATIC_DIR / "index.html"
-    if index_path.exists():
-        return HTMLResponse(content=index_path.read_text(encoding="utf-8"))
+    content = find_index_html()
+    if content:
+        return HTMLResponse(content=content)
     return HTMLResponse(
-        content="<h1>index.html not found in static directory</h1>", status_code=404
+        content="<h1>index.html not found. Place index.html in the root or 'static/' folder.</h1>",
+        status_code=404,
     )
 
 
