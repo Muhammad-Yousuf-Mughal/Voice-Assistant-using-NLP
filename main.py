@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -11,6 +11,8 @@ from pydantic import BaseModel
 load_dotenv()
 
 app = FastAPI(title="AI Voice Agent")
+
+BASE_DIR = Path(__file__).resolve().parent
 
 api_key = os.getenv("GROQ_API_KEY")
 groq_client = Groq(api_key=api_key) if api_key else None
@@ -32,33 +34,12 @@ SYSTEM_PROMPT = (
 )
 
 
-def find_index_html() -> Optional[str]:
-    """Search for index.html in static folder or root directory."""
-    base_dir = Path(__file__).resolve().parent
-    cwd = Path(os.getcwd())
-
-    candidate_paths = [
-        base_dir / "static" / "index.html",
-        base_dir / "index.html",
-        cwd / "static" / "index.html",
-        cwd / "index.html",
-    ]
-
-    for path in candidate_paths:
-        if path.exists():
-            return path.read_text(encoding="utf-8")
-    return None
-
-
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
-    content = find_index_html()
-    if content:
-        return HTMLResponse(content=content)
-    return HTMLResponse(
-        content="<h1>index.html not found. Place index.html in the root or 'static/' folder.</h1>",
-        status_code=404,
-    )
+    index_path = BASE_DIR / "index.html"
+    if index_path.exists():
+        return HTMLResponse(content=index_path.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h1>index.html not found in root directory</h1>", status_code=404)
 
 
 @app.post("/api/chat")
@@ -66,7 +47,7 @@ async def chat_endpoint(request: ChatRequest):
     if not groq_client:
         raise HTTPException(
             status_code=500,
-            detail="GROQ_API_KEY environment variable is missing on Vercel settings.",
+            detail="GROQ_API_KEY is missing. Add it in Vercel Project Settings -> Environment Variables.",
         )
 
     try:
