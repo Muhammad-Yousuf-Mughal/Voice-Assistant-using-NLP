@@ -1,4 +1,5 @@
-﻿import os
+import os
+from pathlib import Path
 from typing import List
 
 from dotenv import load_dotenv
@@ -12,14 +13,14 @@ load_dotenv()
 
 app = FastAPI(title="AI Voice Agent")
 
-os.makedirs("static", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+STATIC_DIR.mkdir(exist_ok=True)
+
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 api_key = os.getenv("GROQ_API_KEY")
-if not api_key:
-    raise ValueError("GROQ_API_KEY environment variable is missing.")
-
-groq_client = Groq(api_key=api_key)
+groq_client = Groq(api_key=api_key) if api_key else None
 
 
 class Message(BaseModel):
@@ -40,11 +41,20 @@ SYSTEM_PROMPT = (
 
 @app.get("/")
 async def serve_index():
-    return FileResponse("static/index.html")
+    index_path = STATIC_DIR / "index.html"
+    if not index_path.exists():
+        raise HTTPException(status_code=404, detail="static/index.html not found")
+    return FileResponse(index_path)
 
 
 @app.post("/api/chat")
 async def chat_endpoint(request: ChatRequest):
+    if not groq_client:
+        raise HTTPException(
+            status_code=500,
+            detail="GROQ_API_KEY environment variable is missing on Vercel settings.",
+        )
+
     try:
         formatted_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
         for msg in request.messages:
