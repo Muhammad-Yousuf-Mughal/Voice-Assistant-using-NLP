@@ -306,7 +306,6 @@
             border-color: rgba(255, 255, 255, 0.2);
         }
 
-        /* Mobile Adjustments */
         @media (max-width: 640px) {
             body { padding: 16px 12px; }
             .main-card { height: 58vh; border-radius: 20px; }
@@ -318,7 +317,6 @@
 </head>
 <body>
 
-    <!-- Header -->
     <header>
         <div class="brand-container">
             <div class="logo-avatar">A</div>
@@ -333,7 +331,6 @@
         </div>
     </header>
 
-    <!-- Glass Main Panel -->
     <main class="main-card">
         <div id="emptyState" class="empty-state">
             <h2 class="empty-title">Say hello to Aurora</h2>
@@ -342,7 +339,6 @@
         <div id="chatBox" class="chat-box"></div>
     </main>
 
-    <!-- Controls Area -->
     <footer class="controls-container">
         <div id="activityDots" class="activity-dots">
             <div class="dot"></div>
@@ -372,44 +368,47 @@
         const emptyState = document.getElementById('emptyState');
 
         let isListening = false;
-        let isProcessing = false; // Lock flag to eliminate double inputs
+        let isProcessing = false;
         let conversationHistory = [];
         let recognition = null;
         let silenceTimer = null;
         let currentTranscript = "";
-        const SILENCE_TIMEOUT_MS = 750;
+        const SILENCE_TIMEOUT_MS = 800;
         const synth = window.speechSynthesis;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
         async function initMicrophoneGain() {
             try {
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     await navigator.mediaDevices.getUserMedia({
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true
-                        }
+                        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
                     });
                 }
             } catch (err) {
-                console.warn('Microphone configuration notice:', err);
+                console.warn('Microphone permission notice:', err);
             }
         }
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        // Creates a fresh SpeechRecognition object every single session to completely prevent audio buffer retention
+        function createFreshRecognition() {
+            if (!SpeechRecognition) return null;
 
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
+            if (recognition) {
+                try { recognition.abort(); } catch(e){}
+                recognition = null;
+            }
 
-            recognition.onresult = (event) => {
-                // Ignore events if not active or already processing a request
+            const instance = new SpeechRecognition();
+            instance.continuous = false; // Discrete phrase recognition wipes buffer on every turn
+            instance.interimResults = true;
+            instance.lang = 'en-US';
+
+            instance.onresult = (event) => {
                 if (!isListening || isProcessing) return;
 
                 let transcript = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
+                for (let i = 0; i < event.results.length; i++) {
                     transcript += event.results[i][0].transcript;
                 }
 
@@ -422,33 +421,36 @@
                 }
             };
 
-            recognition.onerror = (event) => {
-                if (event.error !== 'no-speech') {
-                    console.warn('Speech error:', event.error);
+            instance.onerror = (event) => {
+                if (event.error !== 'no-speech' && event.error !== 'aborted') {
+                    console.warn('Speech engine warning:', event.error);
                 }
             };
 
-            recognition.onend = () => {
-                // Only restart if call is active, not processing, and not speaking
+            instance.onend = () => {
+                // If turn completed naturally and we aren't processing or speaking, restart with a clean instance
                 if (isListening && !isProcessing && !synth.speaking) {
-                    try { recognition.start(); } catch (e) {}
+                    setTimeout(() => { if (isListening && !isProcessing) startListening(); }, 100);
                 }
             };
-        } else {
-            alert('Speech Recognition is not supported on this browser. Please use Google Chrome or Safari.');
+
+            return instance;
         }
 
         async function processUserSpeech() {
             if (!currentTranscript || !isListening || isProcessing) return;
 
-            // Lock immediately to prevent duplicate triggers
+            // Immediately set strict processing lock
             isProcessing = true;
             clearTimeout(silenceTimer);
 
             const userText = currentTranscript;
             currentTranscript = "";
 
-            try { recognition.stop(); } catch (e) {}
+            // HARD ABORT to immediately stop mic and clear hardware buffer
+            if (recognition) {
+                try { recognition.abort(); } catch (e) {}
+            }
 
             renderMessage(userText, 'user');
             conversationHistory.push({ role: 'user', content: userText });
@@ -472,7 +474,7 @@
             } catch (err) {
                 console.error('API Error:', err);
                 setStatus('Error', '');
-                isProcessing = false; // Unlock state on error
+                isProcessing = false;
                 setTimeout(() => { if (isListening) startListening(); }, 2000);
             }
         }
@@ -501,7 +503,11 @@
             if (!isListening || synth.speaking) return;
             currentTranscript = "";
             setStatus('Listening', 'listening');
-            try { recognition.start(); } catch (e) {}
+            
+            recognition = createFreshRecognition();
+            if (recognition) {
+                try { recognition.start(); } catch (e) {}
+            }
         }
 
         function speakOutput(text) {
@@ -517,8 +523,10 @@
             utterance.pitch = 1.0;
 
             const handleSpeechEnd = () => {
-                isProcessing = false; // Release lock only after speech completes
-                if (isListening) startListening();
+                isProcessing = false; // Release lock only when AI fully stops speaking
+                if (isListening) {
+                    setTimeout(() => { startListening(); }, 200);
+                }
             };
 
             utterance.onend = handleSpeechEnd;
@@ -533,7 +541,10 @@
             micBtn.classList.remove('active');
             clearTimeout(silenceTimer);
             synth.cancel();
-            if (recognition) { try { recognition.stop(); } catch (e) {} }
+            if (recognition) { 
+                try { recognition.abort(); } catch (e) {} 
+                recognition = null;
+            }
             setStatus('Idle', '');
         }
 
