@@ -506,28 +506,42 @@
         }
 
         micBtn.addEventListener('click', async () => {
-            if (!SpeechRecognition) {
-                alert("Speech recognition isn't supported on this browser. Please use the text input box below.");
-                return;
-            }
+    // 1. Check Web Speech API support
+    if (!SpeechRecognition) {
+        alert("Speech recognition isn't supported on this browser. Please use the text input box below.");
+        return;
+    }
 
-            try {
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    await navigator.mediaDevices.getUserMedia({ audio: true });
-                }
-            } catch (err) {
-                alert("Microphone access denied or unavailable.");
-                return;
-            }
+    // 2. Warn if running on insecure HTTP (Android Chrome blocks mic on non-HTTPS)
+    if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+        alert("Microphone access requires a secure connection (HTTPS). Please access this site over HTTPS.");
+        return;
+    }
 
-            if (!isListening) {
-                isListening = true;
-                micBtn.classList.add('active');
-                startListening();
-            } else {
-                stopAssistant();
-            }
-        });
+    // 3. Request permission and immediately release hardware lock
+    try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            // CRITICAL FOR ANDROID: Stop raw stream tracks immediately!
+            // This frees up the mic hardware so SpeechRecognition can access it.
+            stream.getTracks().forEach(track => track.stop());
+        }
+    } catch (err) {
+        console.error("Microphone error:", err);
+        alert("Microphone access denied or unavailable. Please check your browser site permissions.");
+        return;
+    }
+
+    // 4. Toggle Assistant State
+    if (!isListening) {
+        isListening = true;
+        micBtn.classList.add('active');
+        startListening();
+    } else {
+        stopAssistant();
+    }
+});
 
         resetBtn.addEventListener('click', () => {
             stopAssistant();
