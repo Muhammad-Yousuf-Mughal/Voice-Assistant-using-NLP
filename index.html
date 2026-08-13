@@ -384,236 +384,251 @@
     </footer>
 
     <script>
-        const micBtn = document.getElementById('micBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const textForm = document.getElementById('textForm');
-        const userInput = document.getElementById('userInput');
-        const statusBadge = document.getElementById('statusBadge');
-        const statusText = document.getElementById('statusText');
-        const activityDots = document.getElementById('activityDots');
-        const chatBox = document.getElementById('chatBox');
-        const emptyState = document.getElementById('emptyState');
+    const micBtn = document.getElementById('micBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const textForm = document.getElementById('textForm');
+    const userInput = document.getElementById('userInput');
+    const statusBadge = document.getElementById('statusBadge');
+    const statusText = document.getElementById('statusText');
+    const activityDots = document.getElementById('activityDots');
+    const chatBox = document.getElementById('chatBox');
+    const emptyState = document.getElementById('emptyState');
 
-        let isListening = false;
-        let isProcessing = false;
-        let conversationHistory = [];
-        let recognition = null;
-        let silenceTimer = null;
-        let currentTranscript = "";
-        const SILENCE_TIMEOUT_MS = 1000;
-        const synth = window.speechSynthesis;
+    let isListening = false;
+    let isProcessing = false;
+    let conversationHistory = [];
+    let recognition = null;
+    let silenceTimer = null;
+    let currentTranscript = "";
+    const SILENCE_TIMEOUT_MS = 1200;
+    const synth = window.speechSynthesis;
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-        // Fallback Text Submit
-        textForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const text = userInput.value.trim();
-            if (!text || isProcessing) return;
-            userInput.value = '';
-            stopAssistant();
-            sendPromptToBackend(text);
-        });
-
-        function createFreshRecognition() {
-            if (!SpeechRecognition) return null;
-
-            if (recognition) {
-                try { recognition.abort(); } catch(e){}
-                recognition = null;
-            }
-
-            const instance = new SpeechRecognition();
-            instance.continuous = false;
-            instance.interimResults = true;
-            instance.lang = 'en-US';
-
-            instance.onresult = (event) => {
-                if (!isListening || isProcessing) return;
-
-                let transcript = '';
-                for (let i = 0; i < event.results.length; i++) {
-                    transcript += event.results[i][0].transcript;
-                }
-
-                if (transcript.trim().length > 0) {
-                    currentTranscript = transcript.trim();
-                    clearTimeout(silenceTimer);
-                    silenceTimer = setTimeout(() => {
-                        processUserSpeech();
-                    }, SILENCE_TIMEOUT_MS);
-                }
-            };
-
-            instance.onerror = (event) => {
-                if (event.error !== 'no-speech' && event.error !== 'aborted') {
-                    console.warn('Speech engine warning:', event.error);
-                }
-            };
-
-            instance.onend = () => {
-                if (isListening && !isProcessing && !synth.speaking) {
-                    setTimeout(() => { if (isListening && !isProcessing) startListening(); }, 300);
-                }
-            };
-
-            return instance;
-        }
-
-        async function processUserSpeech() {
-            if (!currentTranscript || !isListening || isProcessing) return;
-            const text = currentTranscript;
-            currentTranscript = "";
-            stopSpeechRecognitionOnly();
-            await sendPromptToBackend(text);
-        }
-
-        async function sendPromptToBackend(userText) {
-            isProcessing = true;
-            renderMessage(userText, 'user');
-            conversationHistory.push({ role: 'user', content: userText });
-
-            setStatus('Thinking', 'thinking');
-
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: conversationHistory })
-                });
-
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-                const data = await response.json();
-                const aiReply = data.response;
-
-                renderMessage(aiReply, 'ai');
-                conversationHistory.push({ role: 'assistant', content: aiReply });
-                
-                if (isListening) {
-                    speakOutput(aiReply);
-                } else {
-                    setStatus('Idle', '');
-                    isProcessing = false;
-                }
-
-            } catch (err) {
-                console.error('API Error:', err);
-                renderMessage("Sorry, I encountered an issue connecting to the server.", 'ai');
-                setStatus('Error', '');
-                isProcessing = false;
-            }
-        }
-
-        micBtn.addEventListener('click', async () => {
-    // 1. Check Web Speech API support
-    if (!SpeechRecognition) {
-        alert("Speech recognition isn't supported on this browser. Please use the text input box below.");
-        return;
+    // Load voices early (Required for Mobile WebKit / Chrome)
+    if (synth && synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = () => synth.getVoices();
     }
 
-    // 2. Warn if running on insecure HTTP (Android Chrome blocks mic on non-HTTPS)
-    if (!window.isSecureContext && window.location.hostname !== 'localhost') {
-        alert("Microphone access requires a secure connection (HTTPS). Please access this site over HTTPS.");
-        return;
-    }
-
-    // 3. Request permission and immediately release hardware lock
-    try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            
-            // CRITICAL FOR ANDROID: Stop raw stream tracks immediately!
-            // This frees up the mic hardware so SpeechRecognition can access it.
-            stream.getTracks().forEach(track => track.stop());
-        }
-    } catch (err) {
-        console.error("Microphone error:", err);
-        alert("Microphone access denied or unavailable. Please check your browser site permissions.");
-        return;
-    }
-
-    // 4. Toggle Assistant State
-    if (!isListening) {
-        isListening = true;
-        micBtn.classList.add('active');
-        startListening();
-    } else {
+    // Fallback Text Submit
+    textForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const text = userInput.value.trim();
+        if (!text || isProcessing) return;
+        userInput.value = '';
         stopAssistant();
+        sendPromptToBackend(text);
+    });
+
+    function createFreshRecognition() {
+        if (!SpeechRecognition) return null;
+
+        if (recognition) {
+            try { recognition.abort(); } catch(e){}
+            recognition = null;
+        }
+
+        const instance = new SpeechRecognition();
+        instance.continuous = false;
+        instance.interimResults = true;
+        instance.lang = 'en-US';
+
+        instance.onresult = (event) => {
+            if (!isListening || isProcessing) return;
+
+            let transcript = '';
+            for (let i = 0; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+            }
+
+            if (transcript.trim().length > 0) {
+                currentTranscript = transcript.trim();
+                clearTimeout(silenceTimer);
+                silenceTimer = setTimeout(() => {
+                    processUserSpeech();
+                }, SILENCE_TIMEOUT_MS);
+            }
+        };
+
+        instance.onerror = (event) => {
+            console.warn('Speech recognition error:', event.error);
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                alert("Microphone access blocked. Please enable microphone permissions in site settings.");
+                stopAssistant();
+            } else if (event.error === 'network') {
+                alert("Network error: Android Speech Recognition requires an active internet connection.");
+                stopAssistant();
+            }
+        };
+
+        instance.onend = () => {
+            if (isListening && !isProcessing && !synth.speaking) {
+                setTimeout(() => { if (isListening && !isProcessing) startListening(); }, 300);
+            }
+        };
+
+        return instance;
     }
-});
 
-        resetBtn.addEventListener('click', () => {
-            stopAssistant();
-            conversationHistory = [];
-            chatBox.innerHTML = '';
-            emptyState.classList.remove('hidden');
-            setStatus('Idle', '');
-        });
+    async function processUserSpeech() {
+        if (!currentTranscript || !isListening || isProcessing) return;
+        const text = currentTranscript;
+        currentTranscript = "";
+        stopSpeechRecognitionOnly();
+        await sendPromptToBackend(text);
+    }
 
-        function startListening() {
-            if (!isListening || synth.speaking) return;
-            currentTranscript = "";
-            setStatus('Listening', 'listening');
+    async function sendPromptToBackend(userText) {
+        isProcessing = true;
+        renderMessage(userText, 'user');
+        conversationHistory.push({ role: 'user', content: userText });
+
+        setStatus('Thinking', 'thinking');
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: conversationHistory })
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+            const data = await response.json();
+            const aiReply = data.response;
+
+            renderMessage(aiReply, 'ai');
+            conversationHistory.push({ role: 'assistant', content: aiReply });
             
-            recognition = createFreshRecognition();
-            if (recognition) {
-                try { recognition.start(); } catch (e) {}
-            }
-        }
-
-        function speakOutput(text) {
-            setStatus('Speaking', 'speaking');
-            
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 1.05;
-
-            const handleSpeechEnd = () => {
+            if (isListening) {
+                speakOutput(aiReply);
+            } else {
+                setStatus('Idle', '');
                 isProcessing = false;
-                if (isListening) {
-                    setTimeout(() => { startListening(); }, 200);
-                } else {
-                    setStatus('Idle', '');
-                }
-            };
+            }
 
-            utterance.onend = handleSpeechEnd;
-            utterance.onerror = handleSpeechEnd;
+        } catch (err) {
+            console.error('API Error:', err);
+            renderMessage("Sorry, I encountered an issue connecting to the server.", 'ai');
+            setStatus('Error', '');
+            isProcessing = false;
+        }
+    }
 
-            synth.speak(utterance);
+    // UPDATED MIC BUTTON EVENT LISTENER
+    micBtn.addEventListener('click', () => {
+        // 1. Check browser compatibility
+        if (!SpeechRecognition) {
+            alert("Speech recognition isn't supported on this browser. Please use Google Chrome on Android.");
+            return;
         }
 
-        function stopSpeechRecognitionOnly() {
-            clearTimeout(silenceTimer);
-            if (recognition) {
-                try { recognition.abort(); } catch (e) {}
-                recognition = null;
+        // 2. Warn if running on insecure HTTP
+        if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+            alert("Microphone access requires a secure connection (HTTPS).");
+            return;
+        }
+
+        // 3. Unlock Mobile SpeechSynthesis Audio Context on direct user touch
+        if (synth && synth.speaking) {
+            synth.cancel();
+        } else {
+            // Mobile Chrome demands a synth call directly inside the click event to unlock audio
+            const emptyUtterance = new SpeechSynthesisUtterance('');
+            synth.speak(emptyUtterance);
+        }
+
+        // 4. Toggle Assistant
+        if (!isListening) {
+            isListening = true;
+            micBtn.classList.add('active');
+            startListening();
+        } else {
+            stopAssistant();
+        }
+    });
+
+    resetBtn.addEventListener('click', () => {
+        stopAssistant();
+        conversationHistory = [];
+        chatBox.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        setStatus('Idle', '');
+    });
+
+    function startListening() {
+        if (!isListening || synth.speaking) return;
+        currentTranscript = "";
+        setStatus('Listening', 'listening');
+        
+        recognition = createFreshRecognition();
+        if (recognition) {
+            try { 
+                recognition.start(); 
+            } catch (e) {
+                console.error("Recognition start error:", e);
             }
         }
+    }
 
-        function stopAssistant() {
-            isListening = false;
+    function speakOutput(text) {
+        setStatus('Speaking', 'speaking');
+        
+        // Cancel any pending speech
+        synth.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.05;
+
+        const handleSpeechEnd = () => {
             isProcessing = false;
-            micBtn.classList.remove('active');
-            stopSpeechRecognitionOnly();
-            synth.cancel();
-            setStatus('Idle', '');
-        }
+            if (isListening) {
+                setTimeout(() => { startListening(); }, 200);
+            } else {
+                setStatus('Idle', '');
+            }
+        };
 
-        function setStatus(text, statusClass) {
-            statusText.innerText = text;
-            statusBadge.className = 'status-badge ' + (statusClass || '');
-            activityDots.className = 'activity-dots ' + (statusClass || '');
-        }
+        utterance.onend = handleSpeechEnd;
+        utterance.onerror = (e) => {
+            console.warn("Speech synthesis error:", e);
+            handleSpeechEnd();
+        };
 
-        function renderMessage(text, type) {
-            emptyState.classList.add('hidden');
-            const bubble = document.createElement('div');
-            bubble.className = `message-bubble ${type}-bubble`;
-            bubble.innerText = text;
-            chatBox.appendChild(bubble);
-            chatBox.scrollTop = chatBox.scrollHeight;
+        synth.speak(utterance);
+    }
+
+    function stopSpeechRecognitionOnly() {
+        clearTimeout(silenceTimer);
+        if (recognition) {
+            try { recognition.abort(); } catch (e) {}
+            recognition = null;
         }
-    </script>
+    }
+
+    function stopAssistant() {
+        isListening = false;
+        isProcessing = false;
+        micBtn.classList.remove('active');
+        stopSpeechRecognitionOnly();
+        if (synth) synth.cancel();
+        setStatus('Idle', '');
+    }
+
+    function setStatus(text, statusClass) {
+        statusText.innerText = text;
+        statusBadge.className = 'status-badge ' + (statusClass || '');
+        activityDots.className = 'activity-dots ' + (statusClass || '');
+    }
+
+    function renderMessage(text, type) {
+        emptyState.classList.add('hidden');
+        const bubble = document.createElement('div');
+        bubble.className = `message-bubble ${type}-bubble`;
+        bubble.innerText = text;
+        chatBox.appendChild(bubble);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+</script>
 </body>
 </html>
