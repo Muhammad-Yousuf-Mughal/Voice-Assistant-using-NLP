@@ -372,14 +372,14 @@
         const emptyState = document.getElementById('emptyState');
 
         let isListening = false;
+        let isProcessing = false; // Lock flag to eliminate double inputs
         let conversationHistory = [];
         let recognition = null;
         let silenceTimer = null;
         let currentTranscript = "";
-        const SILENCE_TIMEOUT_MS = 700;
+        const SILENCE_TIMEOUT_MS = 750;
         const synth = window.speechSynthesis;
 
-        // Initialize Audio Stream with high sensitivity constraints
         async function initMicrophoneGain() {
             try {
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -396,7 +396,6 @@
             }
         }
 
-        // Initialize Speech Recognition Engine
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
         if (SpeechRecognition) {
@@ -406,7 +405,8 @@
             recognition.lang = 'en-US';
 
             recognition.onresult = (event) => {
-                if (!isListening) return;
+                // Ignore events if not active or already processing a request
+                if (!isListening || isProcessing) return;
 
                 let transcript = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -429,7 +429,8 @@
             };
 
             recognition.onend = () => {
-                if (isListening && !synth.speaking && statusText.innerText === 'Listening') {
+                // Only restart if call is active, not processing, and not speaking
+                if (isListening && !isProcessing && !synth.speaking) {
                     try { recognition.start(); } catch (e) {}
                 }
             };
@@ -437,13 +438,15 @@
             alert('Speech Recognition is not supported on this browser. Please use Google Chrome or Safari.');
         }
 
-        // Handle Speech Input
         async function processUserSpeech() {
-            if (!currentTranscript || !isListening) return;
+            if (!currentTranscript || !isListening || isProcessing) return;
+
+            // Lock immediately to prevent duplicate triggers
+            isProcessing = true;
+            clearTimeout(silenceTimer);
 
             const userText = currentTranscript;
             currentTranscript = "";
-            clearTimeout(silenceTimer);
 
             try { recognition.stop(); } catch (e) {}
 
@@ -469,11 +472,11 @@
             } catch (err) {
                 console.error('API Error:', err);
                 setStatus('Error', '');
+                isProcessing = false; // Unlock state on error
                 setTimeout(() => { if (isListening) startListening(); }, 2000);
             }
         }
 
-        // Toggle Microphone State
         micBtn.addEventListener('click', async () => {
             await initMicrophoneGain();
 
@@ -486,7 +489,6 @@
             }
         });
 
-        // Reset Conversation Event
         resetBtn.addEventListener('click', () => {
             stopAssistant();
             conversationHistory = [];
@@ -496,30 +498,38 @@
         });
 
         function startListening() {
-            if (!isListening) return;
-            synth.cancel();
+            if (!isListening || synth.speaking) return;
             currentTranscript = "";
             setStatus('Listening', 'listening');
             try { recognition.start(); } catch (e) {}
         }
 
         function speakOutput(text) {
-            if (!isListening) return;
+            if (!isListening) {
+                isProcessing = false;
+                return;
+            }
+
             setStatus('Speaking', 'speaking');
             
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = 1.05;
             utterance.pitch = 1.0;
 
-            utterance.onend = () => {
+            const handleSpeechEnd = () => {
+                isProcessing = false; // Release lock only after speech completes
                 if (isListening) startListening();
             };
+
+            utterance.onend = handleSpeechEnd;
+            utterance.onerror = handleSpeechEnd;
 
             synth.speak(utterance);
         }
 
         function stopAssistant() {
             isListening = false;
+            isProcessing = false;
             micBtn.classList.remove('active');
             clearTimeout(silenceTimer);
             synth.cancel();
