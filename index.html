@@ -405,12 +405,10 @@
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    // Load voices early (Required for Mobile WebKit / Chrome)
     if (synth && synth.onvoiceschanged !== undefined) {
         synth.onvoiceschanged = () => synth.getVoices();
     }
 
-    // Fallback Text Submit
     textForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const text = userInput.value.trim();
@@ -433,6 +431,11 @@
         instance.interimResults = true;
         instance.lang = 'en-US';
 
+        instance.onstart = () => {
+            console.log("Speech recognition active and listening...");
+            setStatus('Listening', 'listening');
+        };
+
         instance.onresult = (event) => {
             if (!isListening || isProcessing) return;
 
@@ -440,6 +443,8 @@
             for (let i = 0; i < event.results.length; i++) {
                 transcript += event.results[i][0].transcript;
             }
+
+            console.log("Transcript received:", transcript);
 
             if (transcript.trim().length > 0) {
                 currentTranscript = transcript.trim();
@@ -451,17 +456,20 @@
         };
 
         instance.onerror = (event) => {
-            console.warn('Speech recognition error:', event.error);
+            console.error('Speech recognition error:', event.error);
             if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                alert("Microphone access blocked. Please enable microphone permissions in site settings.");
+                alert("Microphone access blocked. Please check browser permissions in the address bar.");
                 stopAssistant();
             } else if (event.error === 'network') {
-                alert("Network error: Android Speech Recognition requires an active internet connection.");
+                alert("Network error: Chrome Speech Recognition requires active internet.");
                 stopAssistant();
+            } else if (event.error === 'no-speech') {
+                // Ignore no-speech silently, instance.onend will trigger restart if still listening
             }
         };
 
         instance.onend = () => {
+            console.log("Speech recognition stopped.");
             if (isListening && !isProcessing && !synth.speaking) {
                 setTimeout(() => { if (isListening && !isProcessing) startListening(); }, 300);
             }
@@ -515,37 +523,47 @@
         }
     }
 
-    // UPDATED MIC BUTTON EVENT LISTENER
-    micBtn.addEventListener('click', () => {
-        // 1. Check browser compatibility
+    // UPDATED SAFE MIC BUTTON EVENT LISTENER
+    micBtn.addEventListener('click', async () => {
         if (!SpeechRecognition) {
-            alert("Speech recognition isn't supported on this browser. Please use Google Chrome on Android.");
+            alert("Speech recognition isn't supported on this browser.");
             return;
         }
 
-        // 2. Warn if running on insecure HTTP
         if (!window.isSecureContext && window.location.hostname !== 'localhost') {
-            alert("Microphone access requires a secure connection (HTTPS).");
+            alert("Microphone access requires HTTPS.");
             return;
         }
 
-        // 3. Unlock Mobile SpeechSynthesis Audio Context on direct user touch
-        if (synth && synth.speaking) {
+        // 1. Warm up audio context for synthesis
+        if (synth) {
             synth.cancel();
-        } else {
-            // Mobile Chrome demands a synth call directly inside the click event to unlock audio
-            const emptyUtterance = new SpeechSynthesisUtterance('');
-            synth.speak(emptyUtterance);
+            synth.speak(new SpeechSynthesisUtterance(''));
         }
 
-        // 4. Toggle Assistant
-        if (!isListening) {
-            isListening = true;
-            micBtn.classList.add('active');
-            startListening();
-        } else {
+        if (isListening) {
             stopAssistant();
+            return;
         }
+
+        // 2. Request explicit permission & safely release mic stream
+        try {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+            }
+        } catch (err) {
+            console.error("Mic permission denied:", err);
+            alert("Microphone access denied. Please click the lock icon in your address bar and allow microphone access.");
+            return;
+        }
+
+        // 3. Start assistant with a tiny delay so hardware fully releases
+        isListening = true;
+        micBtn.classList.add('active');
+        setTimeout(() => {
+            if (isListening) startListening();
+        }, 150);
     });
 
     resetBtn.addEventListener('click', () => {
@@ -557,25 +575,22 @@
     });
 
     function startListening() {
-        if (!isListening || synth.speaking) return;
+        if (!isListening || (synth && synth.speaking)) return;
         currentTranscript = "";
-        setStatus('Listening', 'listening');
         
         recognition = createFreshRecognition();
         if (recognition) {
             try { 
                 recognition.start(); 
             } catch (e) {
-                console.error("Recognition start error:", e);
+                console.error("Recognition start exception:", e);
             }
         }
     }
 
     function speakOutput(text) {
         setStatus('Speaking', 'speaking');
-        
-        // Cancel any pending speech
-        synth.cancel();
+        if (synth) synth.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 1.05;
@@ -595,7 +610,11 @@
             handleSpeechEnd();
         };
 
-        synth.speak(utterance);
+        if (synth) {
+            synth.speak(utterance);
+        } else {
+            handleSpeechEnd();
+        }
     }
 
     function stopSpeechRecognitionOnly() {
