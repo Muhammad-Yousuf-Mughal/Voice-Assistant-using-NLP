@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 load_dotenv()
 
-app = FastAPI(title="AI Voice Agent")
+app = FastAPI(title="Aurora AI Voice Agent")
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -28,9 +28,10 @@ class ChatRequest(BaseModel):
 
 
 SYSTEM_PROMPT = (
-    "You are an interactive, intelligent voice assistant. "
-    "Provide clear, concise, and conversational responses suitable for text-to-speech synthesis. "
-    "Avoid using markdown symbols like asterisks, bolding, bullet points, or code blocks that sound unnatural when spoken aloud."
+    "You are Aurora, an ultra-fast, intelligent voice assistant. "
+    "Provide very concise, natural, and friendly conversational responses (1 to 3 short sentences max) "
+    "suitable for text-to-speech synthesis. Avoid markdown formatting, asterisks, bullet points, "
+    "or code blocks as they sound unnatural when spoken."
 )
 
 
@@ -55,11 +56,12 @@ async def chat_endpoint(request: ChatRequest):
         for msg in request.messages:
             formatted_messages.append({"role": msg.role, "content": msg.content})
 
+        # Switched to llama-3.1-8b-instant for hyper-fast response latency
         completion = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             messages=formatted_messages,
-            temperature=0.7,
-            max_tokens=250,
+            temperature=0.6,
+            max_tokens=150,
         )
 
         reply = completion.choices[0].message.content.strip()
