@@ -25,18 +25,17 @@
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
-            padding: 24px 16px;
+            padding: 16px;
             overflow-x: hidden;
         }
 
-        /* Top Header */
         header {
             width: 100%;
-            max-width: 1000px;
+            max-width: 820px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 12px;
+            padding: 8px 4px;
         }
 
         .brand-container {
@@ -68,7 +67,6 @@
             font-size: 1.05rem;
             font-weight: 600;
             color: #ffffff;
-            letter-spacing: -0.01em;
         }
 
         .brand-subtitle {
@@ -101,11 +99,12 @@
         .status-badge.thinking .status-dot { background-color: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
         .status-badge.speaking .status-dot { background-color: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
 
-        /* Main Glass Display Panel */
         .main-card {
             width: 100%;
             max-width: 820px;
-            height: 52vh;
+            flex: 1;
+            min-height: 350px;
+            max-height: 60vh;
             background: rgba(18, 14, 29, 0.55);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 24px;
@@ -115,11 +114,10 @@
             flex-direction: column;
             position: relative;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-            margin: auto 0;
+            margin: 16px 0;
             overflow: hidden;
         }
 
-        /* Empty State Screen */
         .empty-state {
             position: absolute;
             inset: 0;
@@ -151,20 +149,17 @@
             line-height: 1.4;
         }
 
-        /* Chat Conversation Scroll Area */
         .chat-box {
             flex: 1;
-            padding: 24px;
+            padding: 20px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
             scroll-behavior: smooth;
         }
 
-        .chat-box::-webkit-scrollbar {
-            width: 6px;
-        }
+        .chat-box::-webkit-scrollbar { width: 6px; }
         .chat-box::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
@@ -172,11 +167,12 @@
 
         .message-bubble {
             max-width: 85%;
-            padding: 14px 18px;
+            padding: 12px 16px;
             border-radius: 18px;
             font-size: 0.95rem;
             line-height: 1.5;
             animation: fadeIn 0.3s ease-in-out;
+            word-break: break-word;
         }
 
         @keyframes fadeIn {
@@ -200,18 +196,59 @@
             border-bottom-left-radius: 4px;
         }
 
-        /* Bottom Controls Section */
         .controls-container {
             width: 100%;
             max-width: 820px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 16px;
-            margin-top: auto;
+            gap: 14px;
         }
 
-        /* Ambient Indicator Dots */
+        /* Fallback Text Form */
+        .text-input-form {
+            width: 100%;
+            display: flex;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 4px 6px 4px 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .text-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-size: 0.95rem;
+        }
+
+        .text-input::placeholder {
+            color: #6b7280;
+        }
+
+        .send-btn {
+            background: #a855f7;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 18px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+
+        .send-btn:hover { background: #9333ea; }
+
+        .voice-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .activity-dots {
             display: flex;
             gap: 6px;
@@ -242,10 +279,9 @@
             100% { transform: scale(1.6); opacity: 1; background-color: #38bdf8; }
         }
 
-        /* Glowing Mic Button */
         .mic-button {
-            width: 76px;
-            height: 76px;
+            width: 68px;
+            height: 68px;
             border-radius: 50%;
             border: none;
             outline: none;
@@ -257,17 +293,10 @@
             justify-content: center;
             box-shadow: 0 0 30px rgba(56, 189, 248, 0.35);
             transition: transform 0.2s ease, box-shadow 0.3s ease;
-            position: relative;
         }
 
-        .mic-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 40px rgba(168, 85, 247, 0.5);
-        }
-
-        .mic-button:active {
-            transform: scale(0.95);
-        }
+        .mic-button:hover { transform: scale(1.05); }
+        .mic-button:active { transform: scale(0.95); }
 
         .mic-button.active {
             animation: pulse-ring 2s infinite;
@@ -280,38 +309,28 @@
             100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
         }
 
-        .mic-icon {
-            width: 28px;
-            height: 28px;
-            fill: currentColor;
-        }
+        .mic-icon { width: 26px; height: 26px; fill: currentColor; }
 
-        /* Reset Conversation Pill Button */
         .reset-btn {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: #9ca3af;
-            padding: 8px 20px;
+            padding: 8px 16px;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
-            backdrop-filter: blur(10px);
         }
 
-        .reset-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #ffffff;
-            border-color: rgba(255, 255, 255, 0.2);
-        }
+        .reset-btn:hover { background: rgba(255, 255, 255, 0.08); color: #ffffff; }
 
         @media (max-width: 640px) {
-            body { padding: 16px 12px; }
-            .main-card { height: 58vh; border-radius: 20px; }
-            .mic-button { width: 68px; height: 68px; }
-            .mic-icon { width: 24px; height: 24px; }
+            body { padding: 12px 8px; }
+            .main-card { max-height: 50vh; margin: 10px 0; }
             .message-bubble { max-width: 90%; font-size: 0.9rem; }
+            .mic-button { width: 60px; height: 60px; }
+            .mic-icon { width: 22px; height: 22px; }
         }
     </style>
 </head>
@@ -334,33 +353,41 @@
     <main class="main-card">
         <div id="emptyState" class="empty-state">
             <h2 class="empty-title">Say hello to Aurora</h2>
-            <p class="empty-subtitle">Tap the mic below and start talking. Your conversation will appear here.</p>
+            <p class="empty-subtitle">Tap the mic below to speak or type your prompt into the box.</p>
         </div>
         <div id="chatBox" class="chat-box"></div>
     </main>
 
     <footer class="controls-container">
-        <div id="activityDots" class="activity-dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+        <!-- Dual Input Support (Voice + Text Input) -->
+        <form id="textForm" class="text-input-form">
+            <input type="text" id="userInput" class="text-input" placeholder="Type a message or tap mic..." autocomplete="off">
+            <button type="submit" class="send-btn">Send</button>
+        </form>
+
+        <div class="voice-controls">
+            <button id="resetBtn" class="reset-btn">Reset</button>
+
+            <button id="micBtn" class="mic-button" aria-label="Toggle Voice Assistant">
+                <svg class="mic-icon" viewBox="0 0 24 24">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                </svg>
+            </button>
+
+            <div id="activityDots" class="activity-dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
         </div>
-
-        <button id="micBtn" class="mic-button" aria-label="Toggle Voice Assistant">
-            <svg class="mic-icon" viewBox="0 0 24 24">
-                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-            </svg>
-        </button>
-
-        <button id="resetBtn" class="reset-btn">Reset conversation</button>
     </footer>
 
     <script>
         const micBtn = document.getElementById('micBtn');
         const resetBtn = document.getElementById('resetBtn');
+        const textForm = document.getElementById('textForm');
+        const userInput = document.getElementById('userInput');
         const statusBadge = document.getElementById('statusBadge');
         const statusText = document.getElementById('statusText');
         const activityDots = document.getElementById('activityDots');
@@ -373,24 +400,21 @@
         let recognition = null;
         let silenceTimer = null;
         let currentTranscript = "";
-        const SILENCE_TIMEOUT_MS = 800;
+        const SILENCE_TIMEOUT_MS = 1000;
         const synth = window.speechSynthesis;
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-        async function initMicrophoneGain() {
-            try {
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    await navigator.mediaDevices.getUserMedia({
-                        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-                    });
-                }
-            } catch (err) {
-                console.warn('Microphone permission notice:', err);
-            }
-        }
+        // Fallback Text Submit
+        textForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = userInput.value.trim();
+            if (!text || isProcessing) return;
+            userInput.value = '';
+            stopAssistant();
+            sendPromptToBackend(text);
+        });
 
-        // Creates a fresh SpeechRecognition object every single session to completely prevent audio buffer retention
         function createFreshRecognition() {
             if (!SpeechRecognition) return null;
 
@@ -400,7 +424,7 @@
             }
 
             const instance = new SpeechRecognition();
-            instance.continuous = false; // Discrete phrase recognition wipes buffer on every turn
+            instance.continuous = false;
             instance.interimResults = true;
             instance.lang = 'en-US';
 
@@ -428,9 +452,8 @@
             };
 
             instance.onend = () => {
-                // If turn completed naturally and we aren't processing or speaking, restart with a clean instance
                 if (isListening && !isProcessing && !synth.speaking) {
-                    setTimeout(() => { if (isListening && !isProcessing) startListening(); }, 100);
+                    setTimeout(() => { if (isListening && !isProcessing) startListening(); }, 300);
                 }
             };
 
@@ -439,19 +462,14 @@
 
         async function processUserSpeech() {
             if (!currentTranscript || !isListening || isProcessing) return;
-
-            // Immediately set strict processing lock
-            isProcessing = true;
-            clearTimeout(silenceTimer);
-
-            const userText = currentTranscript;
+            const text = currentTranscript;
             currentTranscript = "";
+            stopSpeechRecognitionOnly();
+            await sendPromptToBackend(text);
+        }
 
-            // HARD ABORT to immediately stop mic and clear hardware buffer
-            if (recognition) {
-                try { recognition.abort(); } catch (e) {}
-            }
-
+        async function sendPromptToBackend(userText) {
+            isProcessing = true;
             renderMessage(userText, 'user');
             conversationHistory.push({ role: 'user', content: userText });
 
@@ -464,23 +482,43 @@
                     body: JSON.stringify({ messages: conversationHistory })
                 });
 
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
                 const data = await response.json();
                 const aiReply = data.response;
 
                 renderMessage(aiReply, 'ai');
                 conversationHistory.push({ role: 'assistant', content: aiReply });
-                speakOutput(aiReply);
+                
+                if (isListening) {
+                    speakOutput(aiReply);
+                } else {
+                    setStatus('Idle', '');
+                    isProcessing = false;
+                }
 
             } catch (err) {
                 console.error('API Error:', err);
+                renderMessage("Sorry, I encountered an issue connecting to the server.", 'ai');
                 setStatus('Error', '');
                 isProcessing = false;
-                setTimeout(() => { if (isListening) startListening(); }, 2000);
             }
         }
 
         micBtn.addEventListener('click', async () => {
-            await initMicrophoneGain();
+            if (!SpeechRecognition) {
+                alert("Speech recognition isn't supported on this browser. Please use the text input box below.");
+                return;
+            }
+
+            try {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    await navigator.mediaDevices.getUserMedia({ audio: true });
+                }
+            } catch (err) {
+                alert("Microphone access denied or unavailable.");
+                return;
+            }
 
             if (!isListening) {
                 isListening = true;
@@ -511,21 +549,17 @@
         }
 
         function speakOutput(text) {
-            if (!isListening) {
-                isProcessing = false;
-                return;
-            }
-
             setStatus('Speaking', 'speaking');
             
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = 1.05;
-            utterance.pitch = 1.0;
 
             const handleSpeechEnd = () => {
-                isProcessing = false; // Release lock only when AI fully stops speaking
+                isProcessing = false;
                 if (isListening) {
                     setTimeout(() => { startListening(); }, 200);
+                } else {
+                    setStatus('Idle', '');
                 }
             };
 
@@ -535,23 +569,27 @@
             synth.speak(utterance);
         }
 
+        function stopSpeechRecognitionOnly() {
+            clearTimeout(silenceTimer);
+            if (recognition) {
+                try { recognition.abort(); } catch (e) {}
+                recognition = null;
+            }
+        }
+
         function stopAssistant() {
             isListening = false;
             isProcessing = false;
             micBtn.classList.remove('active');
-            clearTimeout(silenceTimer);
+            stopSpeechRecognitionOnly();
             synth.cancel();
-            if (recognition) { 
-                try { recognition.abort(); } catch (e) {} 
-                recognition = null;
-            }
             setStatus('Idle', '');
         }
 
         function setStatus(text, statusClass) {
             statusText.innerText = text;
-            statusBadge.className = 'status-badge ' + statusClass;
-            activityDots.className = 'activity-dots ' + statusClass;
+            statusBadge.className = 'status-badge ' + (statusClass || '');
+            activityDots.className = 'activity-dots ' + (statusClass || '');
         }
 
         function renderMessage(text, type) {
