@@ -3,335 +3,46 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Aurora | AI Voice Assistant</title>
+    <title>Aurora | AI Voice Assistant Debug</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body {
             background: radial-gradient(circle at 50% 20%, #1a102f 0%, #080511 100%);
-            color: #f3f4f6;
-            min-height: 100vh;
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px;
-            overflow-x: hidden;
+            color: #f3f4f6; min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: space-between; padding: 16px;
         }
-
-        header {
-            width: 100%;
-            max-width: 820px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 4px;
-        }
-
-        .brand-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #c084fc, #a855f7);
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.1rem;
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
-        }
-
-        .brand-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .brand-title {
-            font-size: 1.05rem;
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        .brand-subtitle {
-            font-size: 0.75rem;
-            color: #9ca3af;
-        }
-
-        .status-badge {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            color: #9ca3af;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(10px);
-        }
-
-        .status-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background-color: #6b7280;
-            transition: all 0.3s ease;
-        }
-
+        header { width: 100%; max-width: 820px; display: flex; justify-content: space-between; align-items: center; }
+        .brand-container { display: flex; align-items: center; gap: 12px; }
+        .logo-avatar { width: 36px; height: 36px; border-radius: 10px; background: #a855f7; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+        .brand-title { font-size: 1.05rem; font-weight: 600; color: #fff; }
+        .status-badge { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; color: #9ca3af; display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; background-color: #6b7280; }
         .status-badge.listening .status-dot { background-color: #22c55e; box-shadow: 0 0 10px #22c55e; }
         .status-badge.thinking .status-dot { background-color: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
         .status-badge.speaking .status-dot { background-color: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
 
-        .main-card {
-            width: 100%;
-            max-width: 820px;
-            flex: 1;
-            min-height: 350px;
-            max-height: 60vh;
-            background: rgba(18, 14, 29, 0.55);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-            margin: 16px 0;
-            overflow: hidden;
-        }
+        .main-card { width: 100%; max-width: 820px; flex: 1; min-height: 250px; max-height: 45vh; background: rgba(18, 14, 29, 0.55); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; display: flex; flex-direction: column; margin: 12px 0; overflow: hidden; position: relative; }
+        .chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+        .message-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.5; word-break: break-word; }
+        .user-bubble { align-self: flex-end; background: linear-gradient(135deg, #a855f7, #6366f1); color: #fff; }
+        .ai-bubble { align-self: flex-start; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); color: #f3f4f6; }
 
-        .empty-state {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 30px;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
+        /* On-Screen Debugger */
+        .debug-card { width: 100%; max-width: 820px; height: 120px; background: rgba(0, 0, 0, 0.7); border: 1px solid #a855f7; border-radius: 12px; padding: 10px; font-family: monospace; font-size: 0.75rem; color: #38bdf8; overflow-y: auto; margin-bottom: 12px; }
+        .debug-title { color: #a855f7; font-weight: bold; margin-bottom: 4px; }
 
-        .empty-state.hidden {
-            opacity: 0;
-        }
-
-        .empty-title {
-            font-size: 1.25rem;
-            font-weight: 500;
-            color: #e5e7eb;
-            margin-bottom: 8px;
-        }
-
-        .empty-subtitle {
-            font-size: 0.875rem;
-            color: #6b7280;
-            max-width: 320px;
-            line-height: 1.4;
-        }
-
-        .chat-box {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            scroll-behavior: smooth;
-        }
-
-        .chat-box::-webkit-scrollbar { width: 6px; }
-        .chat-box::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-
-        .message-bubble {
-            max-width: 85%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            animation: fadeIn 0.3s ease-in-out;
-            word-break: break-word;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .user-bubble {
-            align-self: flex-end;
-            background: linear-gradient(135deg, #a855f7, #6366f1);
-            color: #ffffff;
-            border-bottom-right-radius: 4px;
-            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.25);
-        }
-
-        .ai-bubble {
-            align-self: flex-start;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #f3f4f6;
-            border-bottom-left-radius: 4px;
-        }
-
-        .controls-container {
-            width: 100%;
-            max-width: 820px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 14px;
-        }
-
-        /* Fallback Text Form */
-        .text-input-form {
-            width: 100%;
-            display: flex;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 4px 6px 4px 16px;
-            backdrop-filter: blur(10px);
-        }
-
-        .text-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: #ffffff;
-            font-size: 0.95rem;
-        }
-
-        .text-input::placeholder {
-            color: #6b7280;
-        }
-
-        .send-btn {
-            background: #a855f7;
-            border: none;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 18px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.2s ease;
-        }
-
-        .send-btn:hover { background: #9333ea; }
-
-        .voice-controls {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .activity-dots {
-            display: flex;
-            gap: 6px;
-            height: 12px;
-            align-items: center;
-        }
-
-        .dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background-color: #4b5563;
-            transition: all 0.3s ease;
-        }
-
-        .listening .dot {
-            background-color: #a855f7;
-            animation: dotPulse 1.2s infinite ease-in-out alternate;
-        }
-
-        .listening .dot:nth-child(2) { animation-delay: 0.2s; }
-        .listening .dot:nth-child(3) { animation-delay: 0.4s; }
-        .listening .dot:nth-child(4) { animation-delay: 0.6s; }
-        .listening .dot:nth-child(5) { animation-delay: 0.8s; }
-
-        @keyframes dotPulse {
-            0% { transform: scale(1); opacity: 0.4; }
-            100% { transform: scale(1.6); opacity: 1; background-color: #38bdf8; }
-        }
-
-        .mic-button {
-            width: 68px;
-            height: 68px;
-            border-radius: 50%;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 30px rgba(56, 189, 248, 0.35);
-            transition: transform 0.2s ease, box-shadow 0.3s ease;
-        }
-
-        .mic-button:hover { transform: scale(1.05); }
-        .mic-button:active { transform: scale(0.95); }
-
-        .mic-button.active {
-            animation: pulse-ring 2s infinite;
-            background: linear-gradient(135deg, #ef4444 0%, #a855f7 100%);
-        }
-
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.6); }
-            70% { box-shadow: 0 0 0 22px rgba(168, 85, 247, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
-        }
-
+        .controls-container { width: 100%; max-width: 820px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+        .text-input-form { width: 100%; display: flex; gap: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 4px 6px 4px 16px; }
+        .text-input { flex: 1; background: transparent; border: none; outline: none; color: #fff; }
+        .send-btn { background: #a855f7; border: none; color: white; padding: 8px 16px; border-radius: 18px; cursor: pointer; }
+        .voice-controls { display: flex; align-items: center; gap: 20px; }
+        .mic-button { width: 68px; height: 68px; border-radius: 50%; border: none; outline: none; cursor: pointer; background: linear-gradient(135deg, #38bdf8, #a855f7); color: white; display: flex; align-items: center; justify-content: center; }
+        .mic-button.active { background: linear-gradient(135deg, #ef4444, #a855f7); }
         .mic-icon { width: 26px; height: 26px; fill: currentColor; }
-
-        .reset-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #9ca3af;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .reset-btn:hover { background: rgba(255, 255, 255, 0.08); color: #ffffff; }
-
-        @media (max-width: 640px) {
-            body { padding: 12px 8px; }
-            .main-card { max-height: 50vh; margin: 10px 0; }
-            .message-bubble { max-width: 90%; font-size: 0.9rem; }
-            .mic-button { width: 60px; height: 60px; }
-            .mic-icon { width: 22px; height: 22px; }
-        }
+        .reset-btn { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); color: #9ca3af; padding: 8px 16px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -339,10 +50,7 @@
     <header>
         <div class="brand-container">
             <div class="logo-avatar">A</div>
-            <div class="brand-info">
-                <span class="brand-title">Aurora</span>
-                <span class="brand-subtitle">AI Voice Assistant</span>
-            </div>
+            <span class="brand-title">Aurora Assistant</span>
         </div>
         <div id="statusBadge" class="status-badge">
             <div class="status-dot"></div>
@@ -351,15 +59,16 @@
     </header>
 
     <main class="main-card">
-        <div id="emptyState" class="empty-state">
-            <h2 class="empty-title">Say hello to Aurora</h2>
-            <p class="empty-subtitle">Tap the mic below to speak or type your prompt into the box.</p>
-        </div>
         <div id="chatBox" class="chat-box"></div>
     </main>
 
+    <!-- ON-SCREEN DEBUGGER LOG -->
+    <div class="debug-card">
+        <div class="debug-title">System Status Log:</div>
+        <div id="debugLog">Initializing...</div>
+    </div>
+
     <footer class="controls-container">
-        <!-- Dual Input Support (Voice + Text Input) -->
         <form id="textForm" class="text-input-form">
             <input type="text" id="userInput" class="text-input" placeholder="Type a message or tap mic..." autocomplete="off">
             <button type="submit" class="send-btn">Send</button>
@@ -367,287 +76,257 @@
 
         <div class="voice-controls">
             <button id="resetBtn" class="reset-btn">Reset</button>
-
-            <button id="micBtn" class="mic-button" aria-label="Toggle Voice Assistant">
+            <button id="micBtn" class="mic-button">
                 <svg class="mic-icon" viewBox="0 0 24 24">
                     <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
                     <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
                 </svg>
             </button>
-
-            <div id="activityDots" class="activity-dots">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
-            </div>
         </div>
     </footer>
 
     <script>
-    const micBtn = document.getElementById('micBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const textForm = document.getElementById('textForm');
-    const userInput = document.getElementById('userInput');
-    const statusBadge = document.getElementById('statusBadge');
-    const statusText = document.getElementById('statusText');
-    const activityDots = document.getElementById('activityDots');
-    const chatBox = document.getElementById('chatBox');
-    const emptyState = document.getElementById('emptyState');
+        const micBtn = document.getElementById('micBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const textForm = document.getElementById('textForm');
+        const userInput = document.getElementById('userInput');
+        const statusBadge = document.getElementById('statusBadge');
+        const statusText = document.getElementById('statusText');
+        const chatBox = document.getElementById('chatBox');
+        const debugLog = document.getElementById('debugLog');
 
-    let isListening = false;
-    let isProcessing = false;
-    let conversationHistory = [];
-    let recognition = null;
-    let silenceTimer = null;
-    let currentTranscript = "";
-    const SILENCE_TIMEOUT_MS = 1200;
-    const synth = window.speechSynthesis;
+        let isListening = false;
+        let isProcessing = false;
+        let conversationHistory = [];
+        let recognition = null;
+        let silenceTimer = null;
+        let currentTranscript = "";
+        const SILENCE_TIMEOUT_MS = 1200;
+        const synth = window.speechSynthesis;
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (synth && synth.onvoiceschanged !== undefined) {
-        synth.onvoiceschanged = () => synth.getVoices();
-    }
-
-    textForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const text = userInput.value.trim();
-        if (!text || isProcessing) return;
-        userInput.value = '';
-        stopAssistant();
-        sendPromptToBackend(text);
-    });
-
-    function createFreshRecognition() {
-        if (!SpeechRecognition) return null;
-
-        if (recognition) {
-            try { recognition.abort(); } catch(e){}
-            recognition = null;
+        function log(msg) {
+            console.log(msg);
+            debugLog.innerHTML += `<br>> ${msg}`;
+            debugLog.scrollTop = debugLog.scrollHeight;
         }
 
-        const instance = new SpeechRecognition();
-        instance.continuous = false;
-        instance.interimResults = true;
-        instance.lang = 'en-US';
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-        instance.onstart = () => {
-            console.log("Speech recognition active and listening...");
-            setStatus('Listening', 'listening');
-        };
+        if (!SpeechRecognition) {
+            log("CRITICAL ERROR: SpeechRecognition API not found in this browser.");
+        } else {
+            log("SpeechRecognition API detected.");
+        }
 
-        instance.onresult = (event) => {
-            if (!isListening || isProcessing) return;
+        if (!window.isSecureContext && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            log("WARNING: Insecure context (HTTP). Mic will be blocked by browser!");
+        } else {
+            log("Secure context confirmed (HTTPS or Localhost).");
+        }
 
-            let transcript = '';
-            for (let i = 0; i < event.results.length; i++) {
-                transcript += event.results[i][0].transcript;
-            }
+        textForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = userInput.value.trim();
+            if (!text || isProcessing) return;
+            userInput.value = '';
+            stopAssistant();
+            sendPromptToBackend(text);
+        });
 
-            console.log("Transcript received:", transcript);
-
-            if (transcript.trim().length > 0) {
-                currentTranscript = transcript.trim();
-                clearTimeout(silenceTimer);
-                silenceTimer = setTimeout(() => {
-                    processUserSpeech();
-                }, SILENCE_TIMEOUT_MS);
-            }
-        };
-
-        instance.onerror = (event) => {
-            console.error('Speech recognition error:', event.error);
-            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                alert("Microphone access blocked. Please check browser permissions in the address bar.");
-                stopAssistant();
-            } else if (event.error === 'network') {
-                alert("Network error: Chrome Speech Recognition requires active internet.");
-                stopAssistant();
-            } else if (event.error === 'no-speech') {
-                // Ignore no-speech silently, instance.onend will trigger restart if still listening
-            }
-        };
-
-        instance.onend = () => {
-            console.log("Speech recognition stopped.");
-            if (isListening && !isProcessing && !synth.speaking) {
-                setTimeout(() => { if (isListening && !isProcessing) startListening(); }, 300);
-            }
-        };
-
-        return instance;
-    }
-
-    async function processUserSpeech() {
-        if (!currentTranscript || !isListening || isProcessing) return;
-        const text = currentTranscript;
-        currentTranscript = "";
-        stopSpeechRecognitionOnly();
-        await sendPromptToBackend(text);
-    }
-
-    async function sendPromptToBackend(userText) {
-        isProcessing = true;
-        renderMessage(userText, 'user');
-        conversationHistory.push({ role: 'user', content: userText });
-
-        setStatus('Thinking', 'thinking');
-
-        try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: conversationHistory })
-            });
-
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-            const data = await response.json();
-            const aiReply = data.response;
-
-            renderMessage(aiReply, 'ai');
-            conversationHistory.push({ role: 'assistant', content: aiReply });
+        function startListening() {
+            if (!isListening) return;
             
+            log("Initializing Speech Recognition...");
+            if (recognition) {
+                try { recognition.abort(); } catch(e){}
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                log("Mic Active: Listening for speech...");
+                setStatus('Listening', 'listening');
+            };
+
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                log("Heard: " + transcript);
+                if (transcript.trim().length > 0) {
+                    currentTranscript = transcript.trim();
+                    clearTimeout(silenceTimer);
+                    silenceTimer = setTimeout(() => {
+                        processUserSpeech();
+                    }, SILENCE_TIMEOUT_MS);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                log("ERROR Event: " + event.error);
+                if (event.error === 'not-allowed') {
+                    alert("Permission denied! Enable mic access in your browser settings.");
+                    stopAssistant();
+                }
+            };
+
+            recognition.onend = () => {
+                log("Speech recognition session ended.");
+                if (isListening && !isProcessing) {
+                    log("Restarting listener...");
+                    setTimeout(startListening, 300);
+                }
+            };
+
+            try {
+                recognition.start();
+            } catch(e) {
+                log("Start exception: " + e.message);
+            }
+        }
+
+        micBtn.addEventListener('click', () => {
+            if (!SpeechRecognition) {
+                alert("Speech recognition isn't supported.");
+                return;
+            }
+
             if (isListening) {
-                speakOutput(aiReply);
+                log("User stopped assistant.");
+                stopAssistant();
             } else {
+                log("Mic button clicked. Starting assistant...");
+                isListening = true;
+                micBtn.classList.add('active');
+                
+                // Warm up audio synthesis engine
+                if (synth) {
+                    synth.cancel();
+                    const u = new SpeechSynthesisUtterance('');
+                    synth.speak(u);
+                }
+
+                startListening();
+            }
+        });
+
+        async function processUserSpeech() {
+            if (!currentTranscript || isProcessing) return;
+            const text = currentTranscript;
+            currentTranscript = "";
+            
+            if (recognition) {
+                try { recognition.abort(); } catch(e){}
+            }
+            
+            await sendPromptToBackend(text);
+        }
+
+        async function sendPromptToBackend(userText) {
+            isProcessing = true;
+            renderMessage(userText, 'user');
+            conversationHistory.push({ role: 'user', content: userText });
+            setStatus('Thinking', 'thinking');
+            log("Sending request to /api/chat...");
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: conversationHistory })
+                });
+
+                if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+
+                const data = await response.json();
+                const aiReply = data.response;
+                log("Backend responded successfully.");
+
+                renderMessage(aiReply, 'ai');
+                conversationHistory.push({ role: 'assistant', content: aiReply });
+
+                if (isListening) {
+                    speakOutput(aiReply);
+                } else {
+                    setStatus('Idle', '');
+                    isProcessing = false;
+                }
+
+            } catch (err) {
+                log("Fetch Error: " + err.message);
+                renderMessage("Error connecting to server.", 'ai');
                 setStatus('Idle', '');
                 isProcessing = false;
             }
-
-        } catch (err) {
-            console.error('API Error:', err);
-            renderMessage("Sorry, I encountered an issue connecting to the server.", 'ai');
-            setStatus('Error', '');
-            isProcessing = false;
-        }
-    }
-
-    // UPDATED SAFE MIC BUTTON EVENT LISTENER
-    micBtn.addEventListener('click', async () => {
-        if (!SpeechRecognition) {
-            alert("Speech recognition isn't supported on this browser.");
-            return;
         }
 
-        if (!window.isSecureContext && window.location.hostname !== 'localhost') {
-            alert("Microphone access requires HTTPS.");
-            return;
-        }
+        function speakOutput(text) {
+            setStatus('Speaking', 'speaking');
+            log("Speaking response...");
+            if (synth) synth.cancel();
 
-        // 1. Warm up audio context for synthesis
-        if (synth) {
-            synth.cancel();
-            synth.speak(new SpeechSynthesisUtterance(''));
-        }
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.05;
 
-        if (isListening) {
-            stopAssistant();
-            return;
-        }
+            const onFinish = () => {
+                log("Finished speaking.");
+                isProcessing = false;
+                if (isListening) {
+                    setTimeout(startListening, 300);
+                } else {
+                    setStatus('Idle', '');
+                }
+            };
 
-        // 2. Request explicit permission & safely release mic stream
-        try {
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                stream.getTracks().forEach(track => track.stop());
-            }
-        } catch (err) {
-            console.error("Mic permission denied:", err);
-            alert("Microphone access denied. Please click the lock icon in your address bar and allow microphone access.");
-            return;
-        }
+            utterance.onend = onFinish;
+            utterance.onerror = (e) => {
+                log("TTS Error: " + e.error);
+                onFinish();
+            };
 
-        // 3. Start assistant with a tiny delay so hardware fully releases
-        isListening = true;
-        micBtn.classList.add('active');
-        setTimeout(() => {
-            if (isListening) startListening();
-        }, 150);
-    });
-
-    resetBtn.addEventListener('click', () => {
-        stopAssistant();
-        conversationHistory = [];
-        chatBox.innerHTML = '';
-        emptyState.classList.remove('hidden');
-        setStatus('Idle', '');
-    });
-
-    function startListening() {
-        if (!isListening || (synth && synth.speaking)) return;
-        currentTranscript = "";
-        
-        recognition = createFreshRecognition();
-        if (recognition) {
-            try { 
-                recognition.start(); 
-            } catch (e) {
-                console.error("Recognition start exception:", e);
-            }
-        }
-    }
-
-    function speakOutput(text) {
-        setStatus('Speaking', 'speaking');
-        if (synth) synth.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.05;
-
-        const handleSpeechEnd = () => {
-            isProcessing = false;
-            if (isListening) {
-                setTimeout(() => { startListening(); }, 200);
+            if (synth) {
+                synth.speak(utterance);
             } else {
-                setStatus('Idle', '');
+                onFinish();
             }
-        };
-
-        utterance.onend = handleSpeechEnd;
-        utterance.onerror = (e) => {
-            console.warn("Speech synthesis error:", e);
-            handleSpeechEnd();
-        };
-
-        if (synth) {
-            synth.speak(utterance);
-        } else {
-            handleSpeechEnd();
         }
-    }
 
-    function stopSpeechRecognitionOnly() {
-        clearTimeout(silenceTimer);
-        if (recognition) {
-            try { recognition.abort(); } catch (e) {}
-            recognition = null;
+        function stopAssistant() {
+            isListening = false;
+            isProcessing = false;
+            micBtn.classList.remove('active');
+            clearTimeout(silenceTimer);
+            if (recognition) {
+                try { recognition.abort(); } catch (e) {}
+            }
+            if (synth) synth.cancel();
+            setStatus('Idle', '');
+            log("Assistant deactivated.");
         }
-    }
 
-    function stopAssistant() {
-        isListening = false;
-        isProcessing = false;
-        micBtn.classList.remove('active');
-        stopSpeechRecognitionOnly();
-        if (synth) synth.cancel();
-        setStatus('Idle', '');
-    }
+        resetBtn.addEventListener('click', () => {
+            stopAssistant();
+            conversationHistory = [];
+            chatBox.innerHTML = '';
+            log("Reset completed.");
+        });
 
-    function setStatus(text, statusClass) {
-        statusText.innerText = text;
-        statusBadge.className = 'status-badge ' + (statusClass || '');
-        activityDots.className = 'activity-dots ' + (statusClass || '');
-    }
+        function setStatus(text, statusClass) {
+            statusText.innerText = text;
+            statusBadge.className = 'status-badge ' + (statusClass || '');
+        }
 
-    function renderMessage(text, type) {
-        emptyState.classList.add('hidden');
-        const bubble = document.createElement('div');
-        bubble.className = `message-bubble ${type}-bubble`;
-        bubble.innerText = text;
-        chatBox.appendChild(bubble);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-</script>
+        function renderMessage(text, type) {
+            const bubble = document.createElement('div');
+            bubble.className = `message-bubble ${type}-bubble`;
+            bubble.innerText = text;
+            chatBox.appendChild(bubble);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
 </body>
 </html>
